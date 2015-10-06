@@ -47,7 +47,17 @@ class Generator {
         this.__checkIfExpired();
         this.expiredInterval = setInterval(() => {
             this.__checkIfExpired();
-        }, 1000);
+        }, 500);
+    }
+
+    __checkIfExpired () {
+        this.client.get('generatorHash', (err, res) => {
+            if (res === this.lastHex) {
+                console.log('expired');
+                this.start();
+            }
+            this.lastHex = res;
+        });
     }
 
     __getMessage () {
@@ -72,15 +82,6 @@ class Generator {
         });
     }
 
-    __checkIfExpired () {
-        this.client.get('generatorHash', (err, res) => {
-            if (res === this.lastHex) {
-                console.log('expired');
-                this.start();
-            }
-            this.lastHex = res;
-        });
-    }
 }
 
 module.exports = Generator;

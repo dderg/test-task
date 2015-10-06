@@ -3,5 +3,10 @@ language: node_js
 node_js:
     - "4.1"
 
+before_install:
+	- "apt-get update"
+	- "apt-get install redis-server"
+	- "redis-server /etc/redis/redis.conf"
+
 before_script:
     - "npm install -g mocha"

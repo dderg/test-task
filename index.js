@@ -22,24 +22,36 @@ function eventHandler(msg, callback) {
     setTimeout(onComplete, Math.floor(Math.random() * 1000));
 }
 
-let lastHex;
 function startGenerator() {
+    console.log('generator created');
     function updateHash() {
-         let sha = crypto.createHash('sha1');
+        let sha = crypto.createHash('sha1');
         sha.update(Math.random().toString());
         sha.update(new Date().toString());
         let hex = sha.digest('hex');
         client.set('generatorHash', hex);
     }
+    updateHash();
     setInterval(() => {
         updateHash();
     }, 200);
-    updateHash();
+};
+
+function checkGeneratorExist() {
+    let lastHex;
+    function check() {
+        client.get('generatorHash', function (err, res) {
+            console.log(lastHex);
+            if (res === lastHex) {
+                startGenerator();
+            }
+            lastHex = res;
+        });
+    }
+    check();
+    setInterval(() => {
+        check();
+    }, 500);
 }
 
-setInterval(() => {
-    client.get('generatorHash', function (err, res) {
-        console.log(res === lastHex);
-        lastHex = res;
-    });
-}, 500);
+checkGeneratorExist();

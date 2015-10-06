@@ -20,12 +20,11 @@ class Generator {
         this.active = true;
         this.id = generateHash();
         this.client.set('generatorID', this.id, () => {
-            this.__checkOverwriten();
+            this.__onRunning();
             clearInterval(this.expiredInterval);
             this.interval = setInterval(() => {
-                this.__updateHash();
-                this.__checkOverwriten();
-            }, 50);
+                this.__onRunning();
+            }, 120);
             this.messageInterval = setInterval(() => {
                 this.client.rpush('messages', this.__getMessage());
             }, config.generatorTimeout);
@@ -54,6 +53,11 @@ class Generator {
     __getMessage () {
         this.cnt = this.cnt || 0;
         return this.cnt++;
+    }
+
+    __onRunning () {
+        this.__updateHash();
+        this.__checkOverwriten();
     }
 
     __updateHash () {

@@ -3,27 +3,61 @@
 const expect = require('chai').expect;
 const spawn = require('child_process').spawn;
 
-let amountOfNodes = 5;
+function getStringFromLog(data) {
+    return data.toString().replace(/(\r\n|\n|\r)/gm, '').trim();
+}
+
+let amountOfNodes = 10;
 
 describe('main', function () {
     it('should make only one generator', function (done) {
         let generatorsCreated = 0;
+        const processes = [];
         setTimeout(() => {
             expect(generatorsCreated).to.equal(1);
+            for (let process of processes) {
+                process.kill();
+            }
             done();
-        }, 1900);
+        }, 9000);
         function spawnOne() {
             let process = spawn('node', ['index.js']);
+            processes.push(process);
             process.stdout.on('data', function (data) {
-                console.log(data.toString());
-                if (data.toString().replace(/(\r\n|\n|\r)/gm, '').trim() === 'generator created') {
+                var string = data.toString().replace(/(\r\n|\n|\r)/gm, '').trim();
+                if (string === 'generator created') {
+                    generatorsCreated++;
+                }
+                if (string === 'generator removed') {
+                    generatorsCreated--;
+                }
+            });
+        }
+        for (let i = 0; i < amountOfNodes; i++) {
+            spawnOne();
+        }
+    });
+    it('should make a new generator when one is down', function (done) {
+        let generatorsCreated = 0;
+        const processes = [];
+        setTimeout(() => {
+            for (let process of processes) {
+                process.kill();
+            }
+            done();
+        }, 9000);
+        function spawnOne() {
+            let process = spawn('node', ['index.js']);
+            processes.push(process);
+            process.stdout.on('data', function (data) {
+                var string = data.toString().replace(/(\r\n|\n|\r)/gm, '').trim();
+                if (string === 'generator created') {
                     generatorsCreated++;
                 }
             });
-            if (amountOfNodes--) {
-                setTimeout(spawnOne, 50);
-            }
         }
-        spawnOne();
+        for (let i = 0; i < amountOfNodes; i++) {
+            spawnOne();
+        }
     });
 });

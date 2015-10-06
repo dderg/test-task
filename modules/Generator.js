@@ -2,7 +2,6 @@
 
 const crypto = require('crypto');
 const config = require('../config.json');
-console.log(config.generatorTimeout);
 function generateHash() {
     let sha = crypto.createHash('sha1');
     sha.update(Math.random().toString() + new Date().valueOf().toString());

@@ -1,0 +1,71 @@
+'use strict';
+
+const crypto = require('crypto');
+
+function generateHash() {
+    let sha = crypto.createHash('sha1');
+    sha.update(Math.random().toString());
+    sha.update(new Date().toString());
+    return sha.digest('hex');
+}
+
+class Generator {
+    constructor (client) {
+        this.client = client;
+        this.watch();
+    }
+
+    start () {
+        console.log('generator created');
+        this.id = generateHash();
+        this.client.set('generatorID', this.id, () => {
+            this.__onRunning();
+            clearInterval(this.expiredInterval);
+            this.interval = setInterval(() => {
+                this.__onRunning();
+            }, 200);
+        });
+    }
+
+    stop () {
+        console.log('generator removed');
+        clearInterval(this.interval);
+        this.watch();
+    }
+
+    // watches if there's generators active and starts one if needed
+    watch () {
+        this.__checkIfExpired();
+        this.expiredInterval = setInterval(() => {
+            this.__checkIfExpired();
+        }, 500);
+    }
+
+    __onRunning () {
+        this.__updateHash();
+        this.__checkOverwriten();
+    }
+
+    __updateHash () {
+        this.client.set('generatorHash', generateHash());
+    }
+
+    __checkOverwriten () {
+        this.client.get('generatorID', (err, res) => {
+            if (res !== this.id) {
+                this.stop();
+            }
+        });
+    }
+
+    __checkIfExpired () {
+        this.client.get('generatorHash', (err, res) => {
+            if (res === this.lastHex) {
+                this.start();
+            }
+            this.lastHex = res;
+        });
+    }
+}
+
+module.exports = Generator;

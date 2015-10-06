@@ -1,11 +1,11 @@
 'use strict';
 
 const crypto = require('crypto');
-
+const config = require('../config.json');
+console.log(config.generatorTimeout);
 function generateHash() {
     let sha = crypto.createHash('sha1');
-    sha.update(Math.random().toString());
-    sha.update(new Date().toString());
+    sha.update(Math.random().toString() + new Date().valueOf().toString());
     return sha.digest('hex');
 }
 
@@ -21,15 +21,16 @@ class Generator {
         this.active = true;
         this.id = generateHash();
         this.client.set('generatorID', this.id, () => {
-            this.__onRunning();
+            this.__checkOverwriten();
             clearInterval(this.expiredInterval);
             this.interval = setInterval(() => {
-                this.__onRunning();
-            }, 200);
+                this.__updateHash();
+                this.__checkOverwriten();
+            }, 50);
+            this.messageInterval = setInterval(() => {
+                this.client.rpush('messages', this.__getMessage());
+            }, config.generatorTimeout);
         });
-        this.messageInterval = setInterval(() => {
-            this.client.rpush('messages', this.__getMessage());
-        }, 500);
     }
 
     stop () {
@@ -38,6 +39,9 @@ class Generator {
         clearInterval(this.interval);
         clearInterval(this.messageInterval);
         this.watch();
+        if (this.onStop) {
+            this.onStop();
+        }
     }
 
     // watches if there's generators active and starts one if needed
@@ -45,17 +49,12 @@ class Generator {
         this.__checkIfExpired();
         this.expiredInterval = setInterval(() => {
             this.__checkIfExpired();
-        }, 500);
+        }, 1000);
     }
 
     __getMessage () {
         this.cnt = this.cnt || 0;
         return this.cnt++;
-    }
-
-    __onRunning () {
-        this.__updateHash();
-        this.__checkOverwriten();
     }
 
     __updateHash () {
@@ -73,6 +72,7 @@ class Generator {
     __checkIfExpired () {
         this.client.get('generatorHash', (err, res) => {
             if (res === this.lastHex) {
+                console.log('expired');
                 this.start();
             }
             this.lastHex = res;

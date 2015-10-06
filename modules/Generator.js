@@ -12,11 +12,13 @@ function generateHash() {
 class Generator {
     constructor (client) {
         this.client = client;
+        this.active = false;
         this.watch();
     }
 
     start () {
         console.log('generator created');
+        this.active = true;
         this.id = generateHash();
         this.client.set('generatorID', this.id, () => {
             this.__onRunning();
@@ -25,11 +27,16 @@ class Generator {
                 this.__onRunning();
             }, 200);
         });
+        this.messageInterval = setInterval(() => {
+            this.client.rpush('messages', this.__getMessage());
+        }, 500);
     }
 
     stop () {
         console.log('generator removed');
+        this.active = false;
         clearInterval(this.interval);
+        clearInterval(this.messageInterval);
         this.watch();
     }
 
@@ -39,6 +46,11 @@ class Generator {
         this.expiredInterval = setInterval(() => {
             this.__checkIfExpired();
         }, 500);
+    }
+
+    __getMessage () {
+        this.cnt = this.cnt || 0;
+        return this.cnt++;
     }
 
     __onRunning () {

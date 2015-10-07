@@ -44,6 +44,7 @@ class Generator {
 
     // watches if there's generators active and starts one if needed
     watch () {
+        this.lastHex = null;
         this.__checkIfExpired();
         this.expiredInterval = setInterval(() => {
             this.__checkIfExpired();

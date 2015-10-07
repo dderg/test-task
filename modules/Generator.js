@@ -18,7 +18,10 @@ class Generator {
     start () {
         console.log('generator created');
         this.id = generateHash();
-        this.client.set('generatorID', this.id, () => {
+        this.client.set('generatorID', this.id, (err) => {
+            if (err) {
+                throw err;
+            }
             this.active = true;
             this.__onRunning();
             clearInterval(this.expiredInterval);
@@ -53,6 +56,9 @@ class Generator {
 
     __checkIfExpired () {
         this.client.get('generatorHash', (err, res) => {
+            if (err) {
+                throw err;
+            }
             if (res === this.lastHex) {
                 console.log('expired');
                 this.start();
@@ -77,6 +83,9 @@ class Generator {
 
     __checkOverwriten () {
         this.client.get('generatorID', (err, res) => {
+            if (err) {
+                throw err;
+            }
             if (res !== this.id) {
                 this.stop();
             }

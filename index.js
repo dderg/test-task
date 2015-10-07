@@ -2,9 +2,6 @@
 const redis = require('redis');
 const client = redis.createClient();
 const Generator = require('./modules/Generator');
-client.on('error', function (error) {
-    console.error(error);
-});
 
 let gen;
 if (process.argv[2] === 'getErrors') {

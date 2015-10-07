@@ -17,9 +17,9 @@ class Generator {
 
     start () {
         console.log('generator created');
-        this.active = true;
         this.id = generateHash();
         this.client.set('generatorID', this.id, () => {
+            this.active = true;
             this.__onRunning();
             clearInterval(this.expiredInterval);
             this.interval = setInterval(() => {

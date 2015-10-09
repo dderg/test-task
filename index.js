@@ -36,23 +36,21 @@ function checkServerForMessages() {
         return;
     }
     // Смахивает на DDOS, но другого способа не придумал...
-    client.rpop('messages', function (err, data) {
+    client.blpop('messages', 0, function (err, data) {
         if (err) {
             throw err;
         }
-        if (data !== null) {
-            eventHandler(data, (error, msg) => {
-                // Нужно для проверки миллионного сообщения
-                // можно было конечно поставить if, но мне казалось что все упало
-                if (data % 1000 === 0) {
-                    console.log(data);
-                }
+        eventHandler(data[1], (error, msg) => {
+            // Нужно для проверки миллионного сообщения
+            // можно было конечно поставить if, но мне казалось что все упало
+            if (msg % 1000 === 0) {
+                console.log(msg);
+            }
 
-                if (error) {
-                    client.rpush('errors', msg);
-                }
-            });
-        }
+            if (error) {
+                client.rpush('errors', msg);
+            }
+        });
         return checkServerForMessages();
     });
 }
